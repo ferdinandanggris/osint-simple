@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #121212; color: #e0e0e0; }
+        .card { background-color: #1e1e1e; border: 1px solid #333; }
+        .nav-tabs .nav-link { color: #aaa; }
+        .nav-tabs .nav-link.active { background-color: #1e1e1e; color: #0d6efd; border-color: #333 #333 #1e1e1e; }
+        input, select { background-color: #2c2c2c !important; color: white !important; border: 1px solid #444 !important; }
+        .result-box { max-height: 500px; overflow-y: auto; }
+        img.thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container">
+        <h2 class="mb-4 text-center text-primary">🕵️‍♂️ ANGGRIS INTELLIGENCE DASHBOARD</h2>
+
+        <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="pddikti-tab" data-bs-toggle="tab" data-bs-target="#pddikti" type="button">🎓 PDDIKTI Hunter</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="lens-tab" data-bs-toggle="tab" data-bs-target="#lens" type="button">👁️ Lens Visual</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="pddikti">
+                <div class="card p-3 mb-3">
+                    <div class="input-group">
+                        <input type="text" id="pddikti-keyword" class="form-control" placeholder="Nama Mahasiswa/Dosen...">
+                        <button class="btn btn-primary" onclick="searchPddikti()">Cari Data</button>
+                    </div>
+                </div>
+                <div id="pddikti-results" class="result-box"></div>
+                <div id="pddikti-detail" class="mt-3"></div>
+            </div>
+
+            <div class="tab-pane fade" id="lens">
+                <div class="card p-3 mb-3">
+                    <ul class="nav nav-pills mb-3">
+                        <li class="nav-item"><a class="nav-link active" onclick="setLensMode('url')" href="#">🔗 Via Link URL</a></li>
+                        <li class="nav-item"><a class="nav-link" onclick="setLensMode('file')" href="#">📂 Via Upload File</a></li>
+                    </ul>
+
+                    <div id="lens-url-input">
+                        <input type="text" id="lens-url" class="form-control mb-2" placeholder="Paste URL Gambar (https://...)">
+                    </div>
+                    <div id="lens-file-input" style="display:none;">
+                        <input type="file" id="lens-file" class="form-control mb-2">
+                    </div>
+                    
+                    <button class="btn btn-warning w-100" onclick="scanLens()">🚀 JALANKAN VISUAL SCAN</button>
+                </div>
+                <div id="lens-results" class="row"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+  <script>
+        let lensMode = 'url';
+
+        function searchPddikti() {
+            let kw = $('#pddikti-keyword').val();
+            $('#pddikti-results').html('<p class="text-warning">Sedang mencari...</p>');
+            
+            $.post('/api/pddikti/search', {keyword: kw}, function(data) {
+                let html = '<ul class="list-group">';
+                
+                // 1. DATA MAHASISWA
+                if(data.mahasiswa && data.mahasiswa.length > 0) {
+                    html += '<li class="list-group-item active">MAHASISWA</li>';
+                    data.mahasiswa.forEach(m => {
+                        // PERBAIKAN DI SINI: ganti 'mahasiswa' jadi 'mhs'
+                        html += `<li class="list-group-item bg-dark text-white d-flex justify-content-between">
+                            <div><strong>${m.nama}</strong> <br> <small>${m.nama_pt} - ${m.nim}</small></div>
+                            <button class="btn btn-sm btn-outline-info" onclick="detailPddikti('${m.id}', 'mhs')">Detail</button>
+                        </li>`;
+                    });
+                }
+
+                // 2. DATA DOSEN (Tambahan biar lengkap)
+                if(data.dosen && data.dosen.length > 0) {
+                    html += '<li class="list-group-item active mt-2">DOSEN</li>';
+                    data.dosen.forEach(d => {
+                        html += `<li class="list-group-item bg-dark text-white d-flex justify-content-between">
+                            <div><strong>${d.nama}</strong> <br> <small>${d.nama_pt} - NIDN: ${d.nidn}</small></div>
+                            <button class="btn btn-sm btn-outline-info" onclick="detailPddikti('${d.id}', 'dosen')">Detail</button>
+                        </li>`;
+                    });
+                }
+
+                if(!data.mahasiswa && !data.dosen) {
+                    html += '<li class="list-group-item bg-dark text-danger">Data tidak ditemukan.</li>';
+                }
+
+                html += '</ul>';
+                $('#pddikti-results').html(html);
+            });
+        }
+
+        function detailPddikti(id, type) {
+            $('#pddikti-detail').html('<p class="text-warning">Mengambil detail...</p>');
+            // Ini akan mengirim 'mhs' atau 'dosen' ke Python
+            $.post('/api/pddikti/detail', {id: id, type: type}, function(data) {
+                if(data.error) {
+                     $('#pddikti-detail').html(`<div class="alert alert-danger">${data.error}</div>`);
+                } else {
+                     $('#pddikti-detail').html(`<div class="card p-3"><pre class="text-info">${JSON.stringify(data, null, 2)}</pre></div>`);
+                }
+            });
+        }
+
+        // ... (Sisa fungsi Lens tidak berubah) ...
+        function setLensMode(mode) {
+            lensMode = mode;
+            $('.nav-pills a').removeClass('active');
+            event.target.classList.add('active');
+            if(mode === 'url') { $('#lens-url-input').show(); $('#lens-file-input').hide(); }
+            else { $('#lens-url-input').hide(); $('#lens-file-input').show(); }
+        }
+
+        function scanLens() {
+            let formData = new FormData();
+            formData.append('mode', lensMode);
+            
+            if(lensMode === 'url') {
+                formData.append('url', $('#lens-url').val());
+            } else {
+                formData.append('file', $('#lens-file')[0].files[0]);
+            }
+
+            $('#lens-results').html('<div class="col-12 text-center text-warning"><h3>🤖 Membuka Chrome & Scanning... (Cek Taskbar)</h3></div>');
+
+            $.ajax({
+                url: '/api/lens/scan',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(results) {
+                    let html = '';
+                    if (!results || results.length === 0) {
+                        html = '<div class="alert alert-warning">Tidak ada hasil visual ditemukan.</div>';
+                    } else {
+                        results.forEach(res => {
+                            html += `
+                            <div class="col-md-6 mb-3">
+                                <div class="card p-2">
+                                    <div class="d-flex">
+                                        ${res.img ? `<img src="${res.img}" class="thumb me-2">` : ''}
+                                        <div style="overflow:hidden;">
+                                            <h6 class="text-truncate"><a href="${res.link}" target="_blank">${res.title}</a></h6>
+                                            <small class="text-muted text-truncate d-block">${res.link}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        });
+                    }
+                    $('#lens-results').html(html);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

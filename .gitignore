@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+
+# VS Code & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Project Specific (JANGAN UPLOAD HASIL DOWNLOAD/UPLOAD)
+static/uploads/*
+!static/uploads/.gitkeep
+evidence_images/
+*.log
+*.txt
+*.json
+temp_captcha.png
+geckodriver.log
+
+# Simpan folder-nya tapi abaikan isinya
+evidence_images/*
+!evidence_images/.gitkeep

@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  osint-tool:
+    build: .
+    image: osint-pddikti
+    container_name: pddikti-runner
+    volumes:
+      - .:/app  # Mounting agar kalau edit script di Windows, di Docker langsung berubah
+    # DUA BARIS INI WAJIB AGAR BISA INPUT DI TERMINAL
+    stdin_open: true 
+    tty: true
