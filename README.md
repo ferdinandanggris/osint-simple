@@ -60,10 +60,6 @@ Tools ini menggabungkan teknik scraping API dan Browser Automation (Selenium) un
 ---
 
 ## 📂 Struktur Project
-
-
-```
-
 osint-simple/
 ├── app.py              # Main Flask Controller
 ├── pddikti_lib.py      # Modul Decryptor & API Wrapper PDDIKTI
@@ -73,9 +69,6 @@ osint-simple/
 │   └── uploads/        # Temp storage untuk upload gambar
 └── templates/
 └── index.html      # Dashboard UI
-
-```
-
 ---
 
 ## ⚠️ Disclaimer
@@ -84,5 +77,3 @@ osint-simple/
 Alat ini dibuat untuk tujuan edukasi dan riset keamanan siber (OSINT). Pengembang tidak bertanggung jawab atas penyalahgunaan informasi yang didapatkan melalui alat ini. Gunakan dengan bijak dan etis.
 
 ```
-
----
